@@ -1,4 +1,10 @@
-from Dashboard.view_models import account_history_frame, checklist_snapshot_rows, trade_menu_rows
+from Dashboard.view_models import account_history_frame, checklist_snapshot_rows, trade_menu_rows, validate_checklist_item_input
+
+
+def test_checklist_item_validation_allows_a_valid_new_condition():
+    assert validate_checklist_item_input('  روند صعودی  ', 1.5) == (True, '')
+    assert not validate_checklist_item_input('', 1)[0]
+    assert not validate_checklist_item_input('Trend', 0)[0]
 
 
 def test_account_history_is_oldest_to_newest():

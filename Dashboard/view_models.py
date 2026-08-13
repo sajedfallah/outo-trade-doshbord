@@ -5,6 +5,15 @@ from __future__ import annotations
 import pandas as pd
 
 
+def validate_checklist_item_input(text, weight):
+    cleaned = str(text or "").strip()
+    if not cleaned:
+        return False, "متن شرط چک‌لیست را وارد کنید."
+    if float(weight or 0) <= 0:
+        return False, "امتیاز شرط باید بیشتر از صفر باشد."
+    return True, ""
+
+
 def account_history_frame(snapshots):
     rows = list(reversed(snapshots or []))
     if not rows:

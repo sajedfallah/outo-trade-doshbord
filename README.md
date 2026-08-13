@@ -10,6 +10,7 @@ This repository is an existing production-oriented codebase, not a clean-room re
 - Telegram signal publication and reply-chain lifecycle updates.
 - Direct MT5 market/pending execution with demo-account guard, configurable/discoverable symbol mapping, filling fallbacks, and risk controls.
 - Position-ID-based lifecycle monitoring for partial and final closes.
+- Result Chart V3 cards with a readable price-action panel plus a complete risk/reward map for entry, stop, every target, and persisted exits.
 - Ladder, R-based, fixed-R, ATR, and manual trailing profiles with persisted plans/actions.
 - Account and NEXUS-only performance analytics, workflow audit, reports, strategy analytics, archive, journal, and local deterministic trade review.
 - AutoTrade client/trailing policy data models. There is no central server or remote subscriber client yet.

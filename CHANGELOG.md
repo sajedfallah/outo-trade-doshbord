@@ -2,6 +2,9 @@
 
 ## Unreleased — Admin dashboard simplification
 
+- Fixed the new-checklist-item form: its submit button no longer remains disabled while editing inside a Streamlit form, and blank/zero-weight input now receives an explicit validation message.
+- Replaced fragment-scoped operational reruns with compatible full reruns, preventing Streamlit API errors after checklist saves, archive selection, and image uploads.
+- Upgraded MT5 result images to `NEXUS_RESULT_V3`: readable price-action scaling, compact execution markers, collision-aware labels, all persisted partial/final exits, and a separate complete risk/reward trade map for ENTRY/SL/all TP levels.
 - Replaced the 14-tab default view with a five-item, page-based Persian navigation shell that evaluates only the selected page.
 - Reduced Home to essential account cards, balance/equity history, open positions, and recent activity.
 - Made setup selection immediately render its active checklist and live weighted grade during signal issuance; the immutable checklist snapshot remains attached to the durable signal record.

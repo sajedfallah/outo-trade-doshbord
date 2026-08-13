@@ -22,7 +22,7 @@ if str(ROOT) not in sys.path:
 from config_loader import load_config
 from Dashboard.cards import signal_card, valid_geometry, rr_value
 from Dashboard.trade_archive import collect_trade_images, safe_filename
-from Dashboard.view_models import account_history_frame, checklist_snapshot_rows, trade_menu_rows
+from Dashboard.view_models import account_history_frame, checklist_snapshot_rows, trade_menu_rows, validate_checklist_item_input
 from monitor.workflow import audit
 from mt5trade.service import execute_persisted_signal
 from storage.repo import (
@@ -283,7 +283,7 @@ def render_setups():
                 try:
                     create_setup(name, description)
                     st.success("ستاپ ساخته شد.")
-                    st.rerun(scope="fragment")
+                    st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
 
@@ -299,7 +299,7 @@ def render_setups():
         if st.form_submit_button("ذخیره تنظیمات"):
             update_setup(setup["id"], edit_name, edit_description, active)
             st.success("تغییرات ذخیره شد.")
-            st.rerun(scope="fragment")
+            st.rerun()
 
     st.subheader("آیتم‌های چک‌لیست")
     items = list_setup_items(setup["id"], active_only=False)
@@ -314,17 +314,21 @@ def render_setups():
                 if st.form_submit_button("ذخیره آیتم"):
                     update_setup_item(item["id"], text, weight, required, item_active)
                     st.success("آیتم ذخیره شد.")
-                    st.rerun(scope="fragment")
+                    st.rerun()
     with st.form(f"add_item_{setup['id']}", clear_on_submit=True):
         st.markdown("**افزودن شرط جدید**")
         text = st.text_input("متن شرط")
         c1, c2 = st.columns(2)
         weight = c1.number_input("امتیاز شرط", min_value=0.0, value=1.0, step=0.5)
         required = c2.checkbox("شرط اجباری")
-        if st.form_submit_button("افزودن به چک‌لیست", type="primary", width="stretch", disabled=not text.strip()):
-            add_setup_item(setup["id"], text, weight, required)
-            st.success("شرط اضافه شد.")
-            st.rerun(scope="fragment")
+        if st.form_submit_button("افزودن به چک‌لیست", type="primary", width="stretch"):
+            valid_item, validation_error = validate_checklist_item_input(text, weight)
+            if not valid_item:
+                st.error(validation_error)
+            else:
+                add_setup_item(setup["id"], text, weight, required)
+                st.success("شرط به چک‌لیست اضافه شد.")
+                st.rerun()
 
 
 @st.fragment
@@ -348,12 +352,12 @@ def render_archive():
             label = f"{result_icon} {row['signal_id']}  |  {row['symbol']}  |  {row['direction']}  |  {row['setup']}  |  {row['result']}"
             if st.button(label, key=f"trade_menu_{row['signal_id']}", width="stretch"):
                 st.session_state["archive_selected"] = row["signal_id"]
-                st.rerun(scope="fragment")
+                st.rerun()
         return
 
     if st.button("بازگشت به فهرست معاملات", icon="↩️"):
         st.session_state.pop("archive_selected", None)
-        st.rerun(scope="fragment")
+        st.rerun()
     signal = get_signal(selected) or {}
     signal_events = list_trade_events(selected)
     score = get_signal_setup_score(selected) or {}
@@ -392,7 +396,7 @@ def render_archive():
                 path.write_bytes(upload.getbuffer())
                 add_archive_file(selected, category, str(path), caption, "ADMIN_UPLOAD")
             st.success("تصاویر ذخیره شدند.")
-            st.rerun(scope="fragment")
+            st.rerun()
 
     st.subheader("چک‌لیست ثبت‌شده در زمان صدور")
     try:

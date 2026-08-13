@@ -106,7 +106,7 @@
       "show_tp": true,
       "show_sl": true,
       "show_exit": true,
-      "style_version": "NEXUS_RESULT_V2"
+      "style_version": "NEXUS_RESULT_V3"
     }
   },
   "dashboard": {
