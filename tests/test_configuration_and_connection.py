@@ -11,11 +11,13 @@ from storage import repo
 from tests.conftest import signal as make_signal
 
 
-def test_public_config_contains_no_telegram_secret(monkeypatch):
+def test_public_config_contains_no_telegram_secret(monkeypatch,tmp_path):
     monkeypatch.delenv('NEXUS_TELEGRAM_BOT_TOKEN',raising=False)
     raw=json.loads(Path('config.json').read_text(encoding='utf-8'))
     assert 'bot_token' not in raw['telegram']
-    assert load_config()['telegram']['bot_token']==''
+    isolated=tmp_path/'config.json'
+    isolated.write_text(json.dumps(raw),encoding='utf-8')
+    assert load_config(isolated)['telegram']['bot_token']==''
 
 
 def test_configuration_audit_has_only_known_statuses():

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — Admin dashboard simplification
+
+- Replaced the 14-tab default view with a five-item, page-based Persian navigation shell that evaluates only the selected page.
+- Reduced Home to essential account cards, balance/equity history, open positions, and recent activity.
+- Made setup selection immediately render its active checklist and live weighted grade during signal issuance; the immutable checklist snapshot remains attached to the durable signal record.
+- Changed Trade Archive to a compact trade menu with a separate visual dossier for the selected trade.
+- Preserved the previous full Command Center as an on-demand Advanced tools view.
+- Removed the signal-page `st.stop()` branch after queued Telegram delivery so recoverable delivery states render normally instead of presenting as an application stop.
+- Added pure dashboard view-model regression tests and isolated secret tests from the operator's local `.env` file.
+
 All notable changes should be recorded here. The historical v0.9.8–v0.9.19 narrative is retained in `README.txt` and can be normalized into this file incrementally.
 
 ## Unreleased

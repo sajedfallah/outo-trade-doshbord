@@ -18,7 +18,8 @@ Planned but not implemented: the central signal server, authenticated investor d
 
 ## Runtime layout
 
-- `Dashboard/app.py` — Streamlit Admin Command Center and signal orchestration.
+- `Dashboard/app.py` — streamlined, page-based Admin UI for account overview, signal issuance, setup checklists, and trade dossiers.
+- `Dashboard/advanced_app.py` — the original full Command Center, loaded only when Advanced tools is selected.
 - `MT5_MONITOR.py` / `monitor/mt5_monitor.py` — continuous MT5 lifecycle, trailing, reporting, and workflow monitor.
 - `mt5trade/executor.py` — direct MT5 order planning and submission.
 - `storage/repo.py` — SQLite schema and repository functions.
@@ -40,6 +41,8 @@ python -m streamlit run Dashboard/app.py
 ```
 
 For the normal two-process workflow, run `RUN_NEXUS.cmd`; it starts the monitor and then the dashboard. `MT5_MONITOR_ONCE.cmd` performs a single lifecycle synchronization. Do not run more than one continuous monitor.
+
+The default Admin UI evaluates only the selected page, so ordinary clicks no longer rebuild every analytics and operations panel. The Home page contains essential account cards and balance/equity charts. Signal setup selection immediately loads that setup's checklist; the scored checklist snapshot is stored with the signal for future reporting. Trade Archive starts as a compact trade menu and opens one detailed dossier at a time. The former all-in-one interface remains available through **Advanced tools**.
 
 The configured MT5 account mode is guarded as demo by default. Do not change it to real without a deliberate live-trading release process.
 
