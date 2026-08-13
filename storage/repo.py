@@ -46,7 +46,7 @@ def _con():
 def _cols(c,table):
     return {r[1] for r in c.execute(f"PRAGMA table_info({table})").fetchall()}
 
-def migrate():
+def _migrate_unlocked():
     with _con() as c:
         try:
             c.execute("PRAGMA journal_mode=WAL")
@@ -364,6 +364,33 @@ def migrate():
         c.execute("INSERT OR IGNORE INTO schema_migrations(version,name) VALUES(1,'v0.9.19 baseline')")
         c.execute("INSERT OR IGNORE INTO schema_migrations(version,name) VALUES(2,'v0.9.20 reliability outbox')")
         c.execute(f'PRAGMA user_version={SCHEMA_VERSION}')
+
+
+def _detected_schema_version():
+    if not DB.exists():return 0
+    try:
+        with sqlite3.connect(f'file:{DB.resolve()}?mode=ro',uri=True,timeout=10) as c:
+            names={r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            if 'schema_migrations' in names:
+                return int(c.execute('SELECT COALESCE(MAX(version),0) FROM schema_migrations').fetchone()[0] or 0)
+            return 1 if 'signals' in names else 0
+    except Exception:return 0
+
+
+def migrate():
+    """Apply repeat-safe migrations under a cross-process lock.
+
+    Existing pre-v0.9.20 databases receive a timestamped online backup before
+    the first schema write, including committed WAL pages.
+    """
+    from filelock import FileLock
+    from storage.backup import timestamped_backup
+    DB.parent.mkdir(parents=True,exist_ok=True)
+    with FileLock(str(DB)+'.schema.lock',timeout=30):
+        prior=_detected_schema_version()
+        if 0<prior<SCHEMA_VERSION:
+            timestamped_backup(DB,DB.parent/'backups',f'NEXUS_DATA_before_schema_v{SCHEMA_VERSION}')
+        _migrate_unlocked()
 
 def next_signal_id():
     mx=0

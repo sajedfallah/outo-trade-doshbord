@@ -11,7 +11,7 @@ All notable changes should be recorded here. The historical v0.9.8–v0.9.19 nar
 - Environment/`.env` Telegram secret loading, public example, ignore rules, and configuration audit.
 - Versioned schema ledger and durable Telegram outbox with bounded retry and fail-closed unknown delivery state.
 - Durable signal creation before Telegram/MT5 side effects and explicit duplicate NX-ID errors.
-- SQLite Backup API migration with timestamped backup, WAL inclusion, integrity validation, row-count report, and active-monitor guard.
+- SQLite Backup API migration with timestamped backup for both in-place and ZIP-to-ZIP upgrades, WAL inclusion, integrity validation, row-count report, schema lock, and active-monitor guard.
 - Incremental real/fake MT5 gateway for broker-free tests.
 - Trailing executing/confirmed/reconciliation states, position-history partial recovery, historical target checks, and freeze-level validation.
 - Compact Admin reliability status and failed/unknown outbox visibility.

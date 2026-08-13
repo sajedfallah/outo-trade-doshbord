@@ -52,6 +52,18 @@ def test_schema_migrations_are_repeat_safe(repo_db):
     with sqlite3.connect(repo_db) as con:assert con.execute('PRAGMA user_version').fetchone()[0]==2
 
 
+def test_existing_database_gets_timestamped_pre_migration_backup(tmp_path,monkeypatch):
+    legacy=tmp_path/'legacy.db'
+    with sqlite3.connect(legacy) as con:
+        con.execute('CREATE TABLE signals(signal_id TEXT PRIMARY KEY)')
+        con.execute("INSERT INTO signals VALUES('NX-OLD')")
+    monkeypatch.setattr(repo,'DB',legacy)
+    repo.migrate()
+    backups=list((tmp_path/'backups').glob('NEXUS_DATA_before_schema_v2_*.db'))
+    assert len(backups)==1
+    with sqlite3.connect(backups[0]) as con:assert con.execute('SELECT signal_id FROM signals').fetchone()[0]=='NX-OLD'
+
+
 def test_sqlite_backup_includes_committed_wal(tmp_path):
     source=tmp_path/'source.db';dest=tmp_path/'backup.db'
     writer=sqlite3.connect(source)

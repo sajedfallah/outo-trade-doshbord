@@ -71,7 +71,7 @@ Audit performed 2026-08-13:
 - SQLite integrity check: passed; database is in WAL mode.
 - Temporary legacy-schema migration smoke test: preserved sample data and created current tables.
 - Existing diagnostic scripts: environment, trailing, and workflow checks ran.
-- Automated pytest reliability suite: 31 tests passed locally and remains broker-independent.
+- Automated pytest reliability suite: 32 tests passed locally and remains broker-independent.
 - MT5 package/terminal availability: detected locally, but no order, partial-close, SL-change, or live broker test was performed by this audit.
 
 High-priority defects and the next acceptance criteria are tracked in `ROADMAP.md`. The historical release narrative remains in `README.txt` until it is curated into the changelog.
