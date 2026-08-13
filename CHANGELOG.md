@@ -2,6 +2,10 @@
 
 ## Unreleased — Admin dashboard simplification
 
+- Replaced manual initial-chart uploads and generated result-image publication with raw chart-panel capture from the configured MT5 terminal. Initial signals fail closed if their raw chart cannot be captured; final cards fall back to text only if capture is unavailable.
+- Partial-close notifications now reply directly to the original signal without an image; final-close cards reply to the same signal with the raw MT5 chart screenshot.
+- Tuned the configured crop to exclude the MT5 terminal/trade panel while retaining the active chart and chart-drawn detail.
+- Added process-local schema verification caching to avoid repeating full DDL migration work for every local dashboard read.
 - Fixed the new-checklist-item form: its submit button no longer remains disabled while editing inside a Streamlit form, and blank/zero-weight input now receives an explicit validation message.
 - Replaced fragment-scoped operational reruns with compatible full reruns, preventing Streamlit API errors after checklist saves, archive selection, and image uploads.
 - Upgraded MT5 result images to `NEXUS_RESULT_V3`: readable price-action scaling, compact execution markers, collision-aware labels, all persisted partial/final exits, and a separate complete risk/reward trade map for ENTRY/SL/all TP levels.

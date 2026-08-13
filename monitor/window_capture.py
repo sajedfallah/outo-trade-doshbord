@@ -263,3 +263,11 @@ def capture_preview(output_path,screenshot_cfg):
         chart_crop=screenshot_cfg.get("chart_crop",{}),
         fallback_mt5_window=screenshot_cfg.get("fallback_mt5_window",True)
     )
+
+
+def capture_current_chart(output_path,cfg):
+    """Capture the visible MT5 chart panel without any drawing or redesign."""
+    screenshot_cfg=(cfg or {}).get("monitor",{}).get("screenshot",{}) or {}
+    if not screenshot_cfg.get("enabled",False):
+        return {"ok":False,"error":"MT5_RAW_CHART_CAPTURE_DISABLED"}
+    return capture_preview(output_path,screenshot_cfg)

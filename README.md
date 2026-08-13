@@ -6,7 +6,8 @@ This repository is an existing production-oriented codebase, not a clean-room re
 
 ## What exists now
 
-- Manual signal creation with TradingView image, BUY/SELL geometry checks, risk or fixed-lot sizing, setup/checklist snapshot, and multi-target trailing plan.
+- Manual signal creation with raw MT5 chart capture, BUY/SELL geometry checks, risk or fixed-lot sizing, setup/checklist snapshot, and multi-target trailing plan.
+- Raw MT5 chart-panel screenshots for initial signal and final result publication; no generated chart overlays are applied to those Telegram images.
 - Telegram signal publication and reply-chain lifecycle updates.
 - Direct MT5 market/pending execution with demo-account guard, configurable/discoverable symbol mapping, filling fallbacks, and risk controls.
 - Position-ID-based lifecycle monitoring for partial and final closes.
@@ -44,6 +45,10 @@ python -m streamlit run Dashboard/app.py
 For the normal two-process workflow, run `RUN_NEXUS.cmd`; it starts the monitor and then the dashboard. `MT5_MONITOR_ONCE.cmd` performs a single lifecycle synchronization. Do not run more than one continuous monitor.
 
 The default Admin UI evaluates only the selected page, so ordinary clicks no longer rebuild every analytics and operations panel. The Home page contains essential account cards and balance/equity charts. Signal setup selection immediately loads that setup's checklist; the scored checklist snapshot is stored with the signal for future reporting. Trade Archive starts as a compact trade menu and opens one detailed dossier at a time. The former all-in-one interface remains available through **Advanced tools**.
+
+## Raw MT5 chart publication
+
+For signal issuance and final-close cards, NEXUS captures the currently visible chart panel from the configured MT5 terminal. It does not add labels, redraw candles, or edit the screenshot. Before publishing a signal, open the intended symbol/timeframe chart in MT5 and keep its drawings visible. The crop is configured in `monitor.screenshot.chart_crop`; it excludes terminal panels while retaining the chart's own drawings and indicators. Partial exits remain text-card replies to the original signal; only the final close sends the raw chart image.
 
 The configured MT5 account mode is guarded as demo by default. Do not change it to real without a deliberate live-trading release process.
 

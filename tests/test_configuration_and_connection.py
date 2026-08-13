@@ -4,6 +4,7 @@ from pathlib import Path
 from config_audit import audit_config
 from config_loader import load_config
 from monitor.mt5_result_chart import generate_result_chart,_spread_positions
+from monitor import mt5_monitor
 from mt5trade.executor import MT5Executor
 from mt5trade.gateway import FakeMT5Gateway
 from mt5trade.service import execute_persisted_signal
@@ -41,6 +42,32 @@ def test_shared_result_chart_does_not_shutdown_mt5(tmp_path,base_config,repo_db)
 def test_result_chart_label_positions_do_not_overlap():
     placed=_spread_positions([100,100.01,100.02,100.03],99,101,min_gap_ratio=.05)
     assert all(right-left>=.099 for left,right in zip(sorted(placed),sorted(placed)[1:]))
+
+
+def test_partial_notice_replies_to_original_signal_without_chart(monkeypatch,tmp_path):
+    payload={};captures=[]
+    monkeypatch.setattr(mt5_monitor,'capture_current_chart',lambda *args,**kwargs: captures.append(True))
+    monkeypatch.setattr(mt5_monitor,'enqueue_outbox',lambda *args,**kwargs: payload.update(kwargs.get('payload') or args[2]) or {'id':1})
+    monkeypatch.setattr(mt5_monitor,'deliver_item',lambda item:{'sent':False,'reason':'TEST'})
+    signal={'signal_id':'NX-001','telegram_message_id':99}
+    event={'event_key':'NX-001:PARTIAL:1','event_type':'PARTIAL_CLOSE'}
+    mt5_monitor.publish_event(None,{'monitor':{'screenshot':{'enabled':True}}},signal,event,'partial')
+    assert captures==[] and payload['image_path'] is None and payload['reply_to_message_id']==99
+
+
+def test_final_notice_captures_raw_mt5_chart(monkeypatch,tmp_path):
+    payload={}
+    def capture(output,cfg):
+        assert 'FINAL_CLOSE' in output.name
+        Path(output).write_bytes(b'raw')
+        return {'ok':True,'mode':'chart_only_metaquotes'}
+    monkeypatch.setattr(mt5_monitor,'capture_current_chart',capture)
+    monkeypatch.setattr(mt5_monitor,'enqueue_outbox',lambda *args,**kwargs: payload.update(kwargs.get('payload') or args[2]) or {'id':1})
+    monkeypatch.setattr(mt5_monitor,'deliver_item',lambda item:{'sent':False,'reason':'TEST'})
+    signal={'signal_id':'NX-001','telegram_message_id':99}
+    event={'event_key':'NX-001:FINAL:1','event_type':'FINAL_CLOSE'}
+    mt5_monitor.publish_event(None,{'monitor':{'screenshot':{'enabled':True}}},signal,event,'final')
+    assert payload['image_path'] and payload['reply_to_message_id']==99
 
 
 def test_executor_surfaces_order_rejection(repo_db,base_config):

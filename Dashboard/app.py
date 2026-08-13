@@ -21,9 +21,11 @@ if str(ROOT) not in sys.path:
 
 from config_loader import load_config
 from Dashboard.cards import signal_card, valid_geometry, rr_value
+from Dashboard.analytics import performance
 from Dashboard.trade_archive import collect_trade_images, safe_filename
 from Dashboard.view_models import account_history_frame, checklist_snapshot_rows, trade_menu_rows, validate_checklist_item_input
 from monitor.workflow import audit
+from monitor.window_capture import capture_current_chart
 from mt5trade.service import execute_persisted_signal
 from storage.repo import (
     DuplicateSignalError, add_archive_file, add_setup_item, create_setup,
@@ -50,12 +52,13 @@ ensure_default_trailing_profiles()
 st.set_page_config(page_title="NEXUS v0.9.20", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 st.markdown("""
 <style>
-.stApp{background:#070a11;direction:rtl}.block-container{max-width:1450px;padding-top:1.1rem}
-[data-testid="stSidebar"]{border-left:1px solid #202a3d}
-[data-testid="stMetric"]{background:#0e1420;border:1px solid #222d43;padding:14px;border-radius:16px}
-.nx-head{padding:18px 22px;border:1px solid #25324a;border-radius:18px;background:linear-gradient(135deg,#121b2d,#090e18);margin-bottom:16px}
-.nx-head h2{margin:0}.nx-head small{opacity:.68}.nx-card{padding:14px;border:1px solid #222d43;border-radius:14px;background:#0d1320;margin-bottom:8px}
-.muted{opacity:.68}.ltr{direction:ltr;text-align:left}.stCodeBlock,code,pre{direction:ltr;text-align:left}
+.stApp{background:radial-gradient(circle at 84% 4%,#192342 0,#0a101d 30%,#080d17 75%);direction:rtl}.block-container{max-width:1540px;padding:1.25rem 1.5rem 2.4rem}
+[data-testid="stSidebar"]{border-left:1px solid #202c43;background:linear-gradient(180deg,#0c1220,#080d17)}
+[data-testid="stMetric"]{background:linear-gradient(145deg,rgba(31,42,67,.92),rgba(15,23,38,.92));border:1px solid rgba(126,145,184,.19);padding:15px 16px;border-radius:18px;box-shadow:0 11px 30px rgba(0,0,0,.17)}
+.nx-head{padding:21px 24px;border:1px solid rgba(126,145,184,.20);border-radius:23px;background:linear-gradient(130deg,rgba(31,44,73,.94),rgba(13,20,35,.80));box-shadow:0 16px 42px rgba(0,0,0,.19);margin-bottom:18px}.nx-head h2{margin:0}.nx-head small{opacity:.68}
+.nx-card{padding:15px 16px;border:1px solid rgba(126,145,184,.17);border-radius:17px;background:linear-gradient(145deg,rgba(24,34,56,.88),rgba(12,18,31,.88));margin-bottom:9px;box-shadow:0 10px 22px rgba(0,0,0,.12)}
+.nx-panel{padding:18px;border:1px solid rgba(126,145,184,.17);border-radius:20px;background:rgba(13,20,34,.72);box-shadow:0 12px 30px rgba(0,0,0,.13)}.muted{opacity:.68}.ltr{direction:ltr;text-align:left}.stCodeBlock,code,pre{direction:ltr;text-align:left}
+.donut{width:142px;height:142px;border-radius:50%;display:grid;place-items:center;margin:8px auto;background:conic-gradient(#44d59b calc(var(--win)*1%),#f05b72 0 100%)}.donut::after{content:'';width:104px;height:104px;border-radius:50%;background:#101827;box-shadow:inset 0 0 20px rgba(0,0,0,.3)}.donut-label{position:relative;top:-95px;text-align:center;font-weight:750;font-size:20px;direction:ltr;height:0}.donut-sub{position:relative;top:-65px;text-align:center;color:#93a4c2;font-size:11px;height:0}
 </style>
 """, unsafe_allow_html=True)
 
@@ -103,6 +106,7 @@ def render_home():
     net_profit = sum(float(e.get("total_profit") or 0) for e in finals)
     wins = sum(float(e.get("total_profit") or 0) > 0 for e in finals)
     win_rate = wins / len(finals) * 100 if finals else 0
+    perf = performance(signals, events, cfg=CFG)
     balance = float(snap.get("balance") or 0)
     equity = float(snap.get("equity") or 0)
     drawdown = ((balance - equity) / balance * 100) if balance > 0 and equity < balance else 0
@@ -117,12 +121,28 @@ def render_home():
     cards[4].metric("نرخ برد", f"{win_rate:.1f}%")
     cards[5].metric("افت فعلی حساب", f"{drawdown:.2f}%")
 
-    st.subheader("نمودار حساب")
+    st.subheader("نمای حساب")
     history = account_history_frame(snapshots)
-    if history.empty:
-        st.info("پس از ثبت Snapshotهای حساب، نمودار بالانس و اکوئیتی در این قسمت نمایش داده می‌شود.")
-    else:
-        st.line_chart(history.set_index("زمان")[["بالانس", "اکوئیتی"]], height=380, width="stretch")
+    chart_col, health_col = st.columns([2.2, .85], gap="large")
+    with chart_col:
+        st.markdown('<div class="nx-panel">', unsafe_allow_html=True)
+        if history.empty:
+            st.info("پس از ثبت Snapshotهای حساب، نمودار بالانس و اکوئیتی در این قسمت نمایش داده می‌شود.")
+        else:
+            st.line_chart(history.set_index("زمان")[["بالانس", "اکوئیتی"]], height=330, width="stretch")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with health_col:
+        st.markdown('<div class="nx-panel">', unsafe_allow_html=True)
+        st.caption("خلاصه عملکرد NEXUS")
+        st.markdown(f'<div class="donut" style="--win:{win_rate:.2f}"></div><div class="donut-label">{win_rate:.0f}%</div><div class="donut-sub">نرخ برد</div>', unsafe_allow_html=True)
+        st.metric("معاملات بسته", perf["total_trades"])
+        st.metric("Profit Factor", "∞" if perf["profit_factor"] == float("inf") else f"{perf['profit_factor']:.2f}")
+        st.metric("میانگین R", f"{perf['avg_r']:+.2f}R")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    if not perf["daily"].empty:
+        st.subheader("عملکرد روزانه")
+        st.bar_chart(perf["daily"].set_index("date")[["P/L"]], height=180, width="stretch")
 
     left, right = st.columns([1.6, 1], gap="large")
     with left:
@@ -211,7 +231,7 @@ def render_signal():
                 target_count = st.number_input("تعداد اهداف", min_value=1, max_value=8, value=3, step=1)
                 for target_number in range(2, int(target_count) + 1):
                     tp_levels.append(st.number_input(f"TP{target_number}", value=0.0, format="%.8f", key=f"compact_tp_{target_number}"))
-    image = st.file_uploader("تصویر تحلیل", type=["png", "jpg", "jpeg", "webp"], key="signal_image")
+    st.info("تصویر سیگنال هنگام صدور، مستقیماً و بدون طراحی مجدد از پنل چارتِ بازِ MetaTrader 5 گرفته می‌شود. پیش از ارسال، همان چارت را روی نماد و تایم‌فریم این سیگنال قرار دهید.")
     default_mt5 = bool(CFG.get("execution", {}).get("execute_by_default", True)) and not bool(CFG.get("execution", {}).get("telegram_only_default", False))
     execution = st.radio("نحوه ارسال", ["تلگرام + اجرای MT5", "تلگرام فقط"], index=0 if default_mt5 else 1, horizontal=True)
 
@@ -221,8 +241,6 @@ def render_signal():
     rr = rr_value(entry, take_profit, stop_loss) if complete else 0
     if complete and not valid:
         st.error(f"چیدمان قیمت‌ها معتبر نیست: {target_reason}")
-    if image:
-        st.image(image, caption="پیش‌نمایش تحلیل", width=560)
     checklist_allowed = not (
         CFG.get("strategy_builder", {}).get("require_checklist_to_publish", False)
         and score.get("required_missed", 0) > 0
@@ -231,11 +249,13 @@ def render_signal():
         st.warning("تمام موارد اجباری چک‌لیست باید تیک بخورند.")
 
     if st.button("ارسال سیگنال", type="primary", width="stretch",
-                 disabled=not (valid and image and signal_id.startswith("NX-") and checklist_allowed)):
+                 disabled=not (valid and signal_id.startswith("NX-") and checklist_allowed)):
         try:
-            suffix = Path(image.name).suffix.lower() or ".png"
-            path = SIGNAL_DIR / f"{signal_id}{suffix}"
-            path.write_bytes(image.getbuffer())
+            path = SIGNAL_DIR / f"{signal_id}.png"
+            screenshot = capture_current_chart(path, CFG)
+            if not screenshot.get("ok"):
+                st.error("تصویر خام چارت MT5 گرفته نشد؛ چارت MetaTrader را باز نگه دارید و دوباره تلاش کنید. خطا: " + str(screenshot.get("error") or "نامشخص"))
+                return
             mt5_enabled = execution == "تلگرام + اجرای MT5"
             trailing = build_signal_plan(signal_id, profile, tp_levels, enabled=bool(trailing_enabled and mt5_enabled), client_id="ADMIN")
             card = signal_card(signal_id, symbol, direction, timeframe, entry, take_profit, stop_loss, risk, lot, targets=tp_levels)

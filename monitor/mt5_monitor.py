@@ -12,8 +12,7 @@ from storage.repo import (
 )
 from telegram.outbox import deliver_item,deliver_due,startup_recovery
 from Dashboard.cards import partial_close_card,final_mt5_card
-from monitor.window_capture import capture_mt5
-from monitor.mt5_result_chart import generate_result_chart
+from monitor.window_capture import capture_current_chart
 from monitor.performance_reports import check_scheduled_reports
 from monitor.trade_metrics import compute_trade_metrics
 from monitor.trade_review import finalize_trade_review
@@ -156,28 +155,25 @@ def publish_event(mt5,cfg,signal,event,card):
     stamp=datetime.now().strftime("%Y%m%d_%H%M%S")
     path=charts/f"{signal['signal_id']}_{event['event_type']}_{stamp}.png"
 
-    reply_to=(
-        signal.get("last_event_message_id")
-        or signal.get("telegram_message_id")
-    )
+    # Lifecycle notices intentionally reply to the original signal card, not
+    # to the preceding notice, so partial updates remain easy to find.
+    reply_to=(signal.get("telegram_message_id") or signal.get("last_event_message_id"))
     event["reply_to_message_id"]=reply_to
 
-    chart_result={"ok":False,"error":"result chart disabled"}
-    if cfg.get("monitor",{}).get("result_chart",{}).get("enabled",True):
+    # Partial exits are compact reply cards only. The final close receives the
+    # untouched screenshot of the visible MT5 chart panel.
+    if event.get('event_type')=='FINAL_CLOSE':
         try:
-            chart_result=generate_result_chart(signal,event,cfg,path,mt5_instance=mt5)
+            chart_result=capture_current_chart(path,cfg)
         except Exception as e:
             chart_result={"ok":False,"error":str(e)}
-
-    if chart_result.get("ok"):
-        log(
-            f"{signal['signal_id']} result image mode=mt5_data_chart "
-            f"symbol={chart_result.get('symbol')} bars={chart_result.get('bars')}"
-        )
-        event["screenshot_path"]=str(path)
+        event["screenshot_path"]=str(path) if chart_result.get("ok") else None
+        if chart_result.get("ok"):
+            log(f"{signal['signal_id']} raw MT5 chart captured mode={chart_result.get('mode')}")
+        else:
+            log(f"{signal['signal_id']} raw MT5 chart capture failed: {chart_result.get('error')}")
     else:
         event["screenshot_path"]=None
-        log(f"{signal['signal_id']} MT5 data chart failed: {chart_result.get('error')}")
     operation='TELEGRAM_PARTIAL' if event.get('event_type')=='PARTIAL_CLOSE' else 'TELEGRAM_FINAL'
     item=enqueue_outbox(f"{event['event_key']}:TELEGRAM",operation,{
         'text':card,'image_path':event.get('screenshot_path'),'reply_to_message_id':reply_to,

@@ -12,13 +12,13 @@ USED = {
     "risk_management.max_lot", "risk_management.max_total_open_risk_percent",
     "execution.execute_by_default", "execution.telegram_only_default", "symbol_map", "symbols", "timeframes",
     "monitor.enabled", "monitor.poll_seconds", "monitor.partial_close_min_volume",
-    "monitor.auto_publish_partial", "monitor.auto_publish_final", "monitor.result_chart",
+    "monitor.auto_publish_partial", "monitor.auto_publish_final", "monitor.screenshot",
     "dashboard", "reporting", "analytics", "journal", "prop_firm",
     "risk_intelligence", "workflow", "strategy_builder", "trailing",
 }
 DEPRECATED = {
     "execution.enable_direct_mt5", "trading.account_mode", "trading.dry_run",
-    "monitor.history_days", "monitor.screenshot", "publisher.reply_result_to_signal",
+    "monitor.history_days", "monitor.result_chart", "publisher.reply_result_to_signal",
 }
 INVALID = {"telegram.bot_token"}
 UNUSED = {
