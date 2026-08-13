@@ -1,0 +1,27 @@
+name: NEXUS reliability tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile
+        run: python -m compileall -q .
+      - name: Test
+        run: python -m pytest -q -p no:cacheprovider
+      - name: Verify no embedded Telegram token
+        shell: pwsh
+        run: |
+          $matches = rg '[0-9]{8,}:[A-Za-z0-9_-]{20,}' -g '!README.txt'
+          if ($LASTEXITCODE -eq 0) { $matches; exit 1 }
+          exit 0

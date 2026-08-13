@@ -1,0 +1,32 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# NEXUS production/local state
+storage/*.db
+storage/*.db-*
+storage/*.sqlite*
+storage/*.log
+storage/*.pid
+storage/*.lock
+storage/backups/
+uploads/*
+!uploads/.gitkeep
+
+# Generated exports and local IDE/OS files
+*.xlsx
+*.csv
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store

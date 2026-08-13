@@ -1,0 +1,39 @@
+NEXUS TRAILING QUICK GUIDE
+==========================
+
+DEFAULT LADDER EXAMPLE
+----------------------
+Signal:
+  Entry = 4400
+  SL    = 4390
+  TP1   = 4410
+  TP2   = 4420
+  TP3   = 4430
+
+Default profile: NEXUS Ladder 50 + BE
+
+At TP1:
+  - Close 50% of INITIAL volume.
+  - Move SL to Entry = 4400.
+
+At TP2:
+  - No additional close by default.
+  - Move SL to TP1 = 4410.
+
+At TP3:
+  - TP3 is the hard final broker TP by default, so the remaining position closes.
+
+If you configure TP4 instead:
+  TP1 -> 50% close + SL Entry
+  TP2 -> SL TP1
+  TP3 -> SL TP2
+  TP4 -> hard final broker TP
+
+CLIENT POLICY PRIORITY
+----------------------
+Signal snapshot / admin policy always controls what a customer may run.
+A future client may customize only when:
+  1. subscription is active,
+  2. trailing is enabled by Admin,
+  3. assigned/allowed profile is active,
+  4. allow_user_customize is enabled by Admin.

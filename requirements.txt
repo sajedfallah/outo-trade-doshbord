@@ -1,0 +1,10 @@
+streamlit>=1.40
+requests>=2.31
+pandas>=2
+MetaTrader5
+Pillow>=10
+filelock>=3.13
+psutil>=5.9
+matplotlib>=3.9
+openpyxl>=3.1
+pytest>=8.3

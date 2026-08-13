@@ -1,0 +1,265 @@
+{
+  "telegram": {
+    "channel_id": "-1004377587405"
+  },
+  "mt5": {
+    "terminal_path": "C:\\Program Files\\Roco Broker MT5 Terminal\\terminal64.exe",
+    "account_mode": "demo"
+  },
+  "execution": {
+    "enable_direct_mt5": true,
+    "execute_by_default": true,
+    "telegram_only_default": false
+  },
+  "trading": {
+    "account_mode": "demo",
+    "dry_run": false,
+    "entry_tolerance_points": 10,
+    "market_entry_tolerance_price": {
+      "XAUUSD": 2.0,
+      "BTCUSD": 50.0
+    },
+    "deviation_points": 50,
+    "magic_number": 320032
+  },
+  "risk_management": {
+    "mode": "risk_percent",
+    "risk_basis": "equity",
+    "default_risk_percent": 1.0,
+    "max_risk_percent_per_trade": 2.0,
+    "max_open_positions": 3,
+    "min_reward_risk": 1.0,
+    "max_lot": 10.0,
+    "max_total_open_risk_percent": 4.0
+  },
+  "publisher": {
+    "reply_result_to_signal": true
+  },
+  "symbol_map": {
+    "XAUUSD": "XAUUSD_l",
+    "BTCUSD": "BTCUSD_l"
+  },
+  "symbols": [
+    "XAUUSD",
+    "XAGUSD",
+    "US30",
+    "NAS100",
+    "EURUSD",
+    "GBPUSD",
+    "BTCUSD",
+    "SOLUSD",
+    "BNBUSD"
+  ],
+  "timeframes": [
+    "1 دقیقه",
+    "2 دقیقه",
+    "3 دقیقه",
+    "5 دقیقه",
+    "10 دقیقه",
+    "15 دقیقه",
+    "30 دقیقه",
+    "45 دقیقه",
+    "1 ساعت",
+    "2 ساعت",
+    "4 ساعت"
+  ],
+  "monitor": {
+    "enabled": true,
+    "poll_seconds": 2,
+    "history_days": 14,
+    "partial_close_min_volume": 1E-06,
+    "auto_publish_partial": true,
+    "auto_publish_final": true,
+    "screenshot": {
+      "enabled": false,
+      "mode": "chart_only",
+      "process_names": [
+        "terminal64.exe",
+        "terminal.exe"
+      ],
+      "window_title_keywords": [
+        "Roco Broker",
+        "MetaTrader 5",
+        "MetaTrader"
+      ],
+      "foreground_delay_seconds": 0.8,
+      "fallback_mt5_window": true,
+      "fallback_full_desktop": false,
+      "chart_crop": {
+        "left": 0.02,
+        "top": 0.055,
+        "right": 0.985,
+        "bottom": 0.79
+      },
+      "terminal_exe_path": "C:\\Program Files\\Roco Broker MT5 Terminal\\terminal64.exe",
+      "window_class_keywords": [
+        "metaquotes",
+        "metatrader"
+      ]
+    },
+    "result_chart": {
+      "enabled": true,
+      "bars": 220,
+      "display_bars": 110,
+      "dpi": 160,
+      "show_entry": true,
+      "show_tp": true,
+      "show_sl": true,
+      "show_exit": true,
+      "style_version": "NEXUS_RESULT_V2"
+    }
+  },
+  "dashboard": {
+    "performance_source": "NEXUS trade events + current MT5 account snapshot",
+    "refresh_seconds": 5,
+    "language": "fa",
+    "available_languages": [
+      "fa",
+      "en"
+    ]
+  },
+  "reporting": {
+    "enabled": true,
+    "timezone": "Asia/Tehran",
+    "daily": {
+      "enabled": true,
+      "time": "23:55",
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "send_when_no_closed_trades": true
+    },
+    "weekly": {
+      "enabled": true,
+      "weekday": 4,
+      "time": "23:58",
+      "send_when_no_closed_trades": true
+    },
+    "catchup_hours": 8
+  },
+  "analytics": {
+    "timezone": "Asia/Tehran",
+    "default_strategy_version": "NEXUS-v1",
+    "setup_tags": [
+      "SCALP",
+      "BREAKOUT",
+      "REVERSAL",
+      "LIQUIDITY",
+      "TREND",
+      "MOMENTUM",
+      "NEWS",
+      "OTHER"
+    ],
+    "sessions_utc": [
+      {
+        "name": "ASIA",
+        "start": 0,
+        "end": 7
+      },
+      {
+        "name": "LONDON",
+        "start": 7,
+        "end": 12
+      },
+      {
+        "name": "NEW YORK",
+        "start": 12,
+        "end": 21
+      },
+      {
+        "name": "LATE",
+        "start": 21,
+        "end": 24
+      }
+    ],
+    "mae_mfe_timeframe": "M1",
+    "score": {
+      "max_drawdown_r_red": 5.0,
+      "loss_streak_yellow": 3,
+      "loss_streak_red": 5
+    }
+  },
+  "journal": {
+    "mistake_tags": [
+      "NONE",
+      "EARLY_EXIT",
+      "LATE_EXIT",
+      "BAD_ENTRY",
+      "OVERRISK",
+      "MANUAL_INTERVENTION",
+      "MISSED_TP",
+      "MISSED_SL",
+      "NEWS_EXPOSURE",
+      "OTHER"
+    ]
+  },
+  "prop_firm": {
+    "enabled": false,
+    "starting_balance": 10000.0,
+    "profit_target_percent": 10.0,
+    "daily_loss_limit_percent": 5.0,
+    "max_loss_limit_percent": 10.0,
+    "minimum_trading_days": 5
+  },
+  "risk_intelligence": {
+    "enabled": true,
+    "telegram_continues_when_blocked": true,
+    "pre_trade_safety": {
+      "enabled": true,
+      "block_unprotected_positions": false,
+      "warn_unprotected_positions": true,
+      "enforce_max_open_positions": true,
+      "enforce_max_total_open_risk": true
+    },
+    "risk_throttle": {
+      "enabled": true,
+      "loss_streak_levels": {
+        "2": 0.75,
+        "3": 0.5,
+        "4": 0.25
+      },
+      "minimum_multiplier": 0.25
+    },
+    "kill_switch": {
+      "enabled": true,
+      "max_consecutive_losses": 5,
+      "use_prop_firm_limits": true,
+      "block_new_mt5_orders": true
+    },
+    "trade_review": {
+      "enabled": true,
+      "engine": "LOCAL_EXPERT_V1"
+    }
+  },
+  "workflow": {
+    "enabled": true,
+    "stall_wait_minutes": 5,
+    "audit_retention_events": 50000,
+    "auto_backfill_on_demand": true
+  },
+  "strategy_builder": {
+    "enabled": true,
+    "score_grades": {
+      "A+": 90,
+      "A": 80,
+      "B": 70,
+      "C": 60,
+      "D": 0
+    },
+    "require_checklist_to_publish": false,
+    "archive_max_recent_buttons": 24
+  },
+  "trailing": {
+    "enabled": true,
+    "default_enabled": true,
+    "default_profile_name": "NEXUS Ladder 50 + BE",
+    "engine_poll_source": "MT5 monitor",
+    "client_policy_mode": "ADMIN_CONTROLLED",
+    "max_targets": 8,
+    "publish_management_updates": false
+  }
+}
