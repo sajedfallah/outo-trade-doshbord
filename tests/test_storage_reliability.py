@@ -52,6 +52,13 @@ def test_schema_migrations_are_repeat_safe(repo_db):
     with sqlite3.connect(repo_db) as con:assert con.execute('PRAGMA user_version').fetchone()[0]==2
 
 
+def test_migrate_uses_a_process_cache_after_the_first_check(repo_db,monkeypatch):
+    calls=[]
+    monkeypatch.setattr(repo,'_migrate_unlocked',lambda: calls.append(True))
+    repo.migrate()
+    assert calls==[]
+
+
 def test_existing_database_gets_timestamped_pre_migration_backup(tmp_path,monkeypatch):
     legacy=tmp_path/'legacy.db'
     with sqlite3.connect(legacy) as con:

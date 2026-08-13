@@ -40,6 +40,20 @@ def test_ladder_tp1_partial_only_once(repo_db,base_config):
     assert sum(x.get('action')==fake.TRADE_ACTION_DEAL for x in fake.sent_requests)==1
 
 
+def test_ladder_minimum_lot_skips_partial_but_moves_sl(repo_db,base_config):
+    fake=FakeMT5Gateway();pos=_position(volume=.01,sl=80);fake.positions=[pos];_plan([99,110])
+    signal=_signal();signal['initial_volume']=.01;signal['mt5_volume']=.01
+    out=process_trailing(fake,base_config,signal,pos)
+    partial=repo.get_trailing_action('NX-001:TRAIL:1:PARTIAL')
+    sl=repo.get_trailing_action('NX-001:TRAIL:1:SL')
+    assert out['ok'] and out['current_stage']==1
+    assert partial['status']=='SKIPPED'
+    assert partial['error']=='VOLUME_BELOW_MINIMUM'
+    assert sl['status']=='CONFIRMED'
+    assert pos.sl==90.0
+    assert not any(x.get('action')==fake.TRADE_ACTION_DEAL for x in fake.sent_requests)
+
+
 def test_ladder_tp2_moves_sl_to_tp1(repo_db,base_config):
     fake=FakeMT5Gateway();pos=_position(sl=90);fake.positions=[pos];_plan([95,99,110],current=1)
     out=process_trailing(fake,base_config,_signal(),pos)

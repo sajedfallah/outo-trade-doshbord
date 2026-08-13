@@ -5,6 +5,7 @@ from datetime import datetime,timezone,timedelta
 
 DB=Path(os.getenv("NEXUS_DB_PATH", Path(__file__).resolve().parent/"NEXUS_DATA.db"))
 SCHEMA_VERSION=2
+_MIGRATED_DB_KEY=None
 
 
 class DuplicateSignalError(ValueError):
@@ -383,6 +384,13 @@ def migrate():
     Existing pre-v0.9.20 databases receive a timestamped online backup before
     the first schema write, including committed WAL pages.
     """
+    global _MIGRATED_DB_KEY
+    db_key=str(DB.resolve())
+    # Repository functions are intentionally small and call migrate() defensively.
+    # Once this process has verified the same database, repeating the full DDL
+    # and cross-process lock on every dashboard widget adds visible local lag.
+    if _MIGRATED_DB_KEY==db_key:
+        return
     from filelock import FileLock
     from storage.backup import timestamped_backup
     DB.parent.mkdir(parents=True,exist_ok=True)
@@ -399,6 +407,7 @@ def migrate():
                 except ValueError:pass
             timestamped_backup(DB,DB.parent/'backups',f'NEXUS_DATA_before_schema_v{SCHEMA_VERSION}')
         _migrate_unlocked()
+        _MIGRATED_DB_KEY=db_key
 
 def next_signal_id():
     mx=0

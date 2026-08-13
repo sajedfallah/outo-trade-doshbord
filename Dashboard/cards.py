@@ -62,6 +62,34 @@ def signal_card(signal_id,symbol,direction,timeframe,entry,tp,sl,risk_percent=No
 #{signal_id.replace("-","")} #{symbol} #NEXUS_SIGNAL
 ━━━━━━━━━━━━━━━━━━"""
 
+
+def imported_mt5_signal_card(signal,kind):
+    direction=str(signal.get('direction') or '').upper()
+    side="🟢 خرید / لانگ" if direction=="BUY" else "🔴 فروش / شورت"
+    waiting=kind=='PENDING'
+    title="⏳ سفارش در انتظار نکسوس" if waiting else "⚡️ سیگنال فعال نکسوس"
+    status="در انتظار فعال‌شدن در MT5" if waiting else "پوزیشن در MT5 باز است"
+    sl=float(signal.get('sl') or 0);tp=float(signal.get('tp') or 0)
+    sl_text=_fmt(sl) if sl else "تعیین نشده"
+    tp_text=_fmt(tp) if tp else "تعیین نشده"
+    return f"""━━━━━━━━━━━━━━━━━━
+{title} | {signal['signal_id']}
+
+🪙 نماد: {signal['symbol']}
+{side} | ⏱️ {signal.get('timeframe') or 'MT5'}
+
+📥 قیمت ثبت: {_fmt(float(signal['entry']))}
+🎯 TP: {tp_text}
+🛑 SL: {sl_text}
+💼 حجم: {_fmt(float(signal.get('lot') or 0))}
+
+📌 وضعیت: {status}
+🧾 منبع: ثبت خودکار از حساب MT5
+🕒 ثبت: {_time_label(_now())}
+
+#{signal['signal_id'].replace('-','')} #{signal['symbol']} #NEXUS_SIGNAL
+━━━━━━━━━━━━━━━━━━"""
+
 def result_card(signal,result_type,exit_price,result_r,return_percent):
     labels={
         "TP":"✅ هدف فعال شد",

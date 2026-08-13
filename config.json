@@ -67,11 +67,12 @@
     "enabled": true,
     "poll_seconds": 2,
     "history_days": 14,
-    "partial_close_min_volume": 1E-06,
+    "partial_close_min_volume": 1e-06,
     "auto_publish_partial": true,
     "auto_publish_final": true,
+    "auto_import_account_entities": true,
     "screenshot": {
-      "enabled": false,
+      "enabled": true,
       "mode": "chart_only",
       "process_names": [
         "terminal64.exe",
@@ -83,13 +84,13 @@
         "MetaTrader"
       ],
       "foreground_delay_seconds": 0.8,
-      "fallback_mt5_window": true,
+      "fallback_mt5_window": false,
       "fallback_full_desktop": false,
       "chart_crop": {
         "left": 0.02,
         "top": 0.055,
         "right": 0.985,
-        "bottom": 0.79
+        "bottom": 0.68
       },
       "terminal_exe_path": "C:\\Program Files\\Roco Broker MT5 Terminal\\terminal64.exe",
       "window_class_keywords": [
@@ -98,7 +99,7 @@
       ]
     },
     "result_chart": {
-      "enabled": true,
+      "enabled": false,
       "bars": 220,
       "display_bars": 110,
       "dpi": 160,
@@ -106,13 +107,13 @@
       "show_tp": true,
       "show_sl": true,
       "show_exit": true,
-      "style_version": "NEXUS_RESULT_V2"
+      "style_version": "NEXUS_RESULT_V3"
     }
   },
   "dashboard": {
     "performance_source": "NEXUS trade events + current MT5 account snapshot",
     "refresh_seconds": 5,
-    "language": "fa",
+    "language": "en",
     "available_languages": [
       "fa",
       "en"

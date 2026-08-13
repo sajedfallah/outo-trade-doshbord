@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased — Admin dashboard simplification
+
+- Added account-wide MT5 import: unknown live positions become sequential active NEXUS signals and unknown pending orders become pending NEXUS signals, with ticket/position deduplication and no MT5 side effect.
+- Added an Admin Home workflow for completing the setup checklist and entry rationale of automatically imported MT5 trades.
+- Made raw chart capture symbol-aware. Manual issuance now waits for the restored MT5 window and fails closed if its active-chart title does not match the selected broker symbol; automatic import/final publication sends a text card rather than a wrong image in that case.
+- Replaced manual initial-chart uploads and generated result-image publication with raw chart-panel capture from the configured MT5 terminal. Initial signals fail closed if their raw chart cannot be captured; final cards fall back to text only if capture is unavailable.
+- Partial-close notifications now reply directly to the original signal without an image; final-close cards reply to the same signal with the raw MT5 chart screenshot.
+- Tuned the configured crop to exclude the MT5 terminal/trade panel while retaining the active chart and chart-drawn detail.
+- Added process-local schema verification caching to avoid repeating full DDL migration work for every local dashboard read.
+- Fixed the new-checklist-item form: its submit button no longer remains disabled while editing inside a Streamlit form, and blank/zero-weight input now receives an explicit validation message.
+- Replaced fragment-scoped operational reruns with compatible full reruns, preventing Streamlit API errors after checklist saves, archive selection, and image uploads.
+- Upgraded MT5 result images to `NEXUS_RESULT_V3`: readable price-action scaling, compact execution markers, collision-aware labels, all persisted partial/final exits, and a separate complete risk/reward trade map for ENTRY/SL/all TP levels.
+- Replaced the 14-tab default view with a five-item, page-based Persian navigation shell that evaluates only the selected page.
+- Reduced Home to essential account cards, balance/equity history, open positions, and recent activity.
+- Made setup selection immediately render its active checklist and live weighted grade during signal issuance; the immutable checklist snapshot remains attached to the durable signal record.
+- Changed Trade Archive to a compact trade menu with a separate visual dossier for the selected trade.
+- Preserved the previous full Command Center as an on-demand Advanced tools view.
+- Removed the signal-page `st.stop()` branch after queued Telegram delivery so recoverable delivery states render normally instead of presenting as an application stop.
+- Added pure dashboard view-model regression tests and isolated secret tests from the operator's local `.env` file.
+
 All notable changes should be recorded here. The historical v0.9.8–v0.9.19 narrative is retained in `README.txt` and can be normalized into this file incrementally.
 
 ## Unreleased

@@ -6,10 +6,12 @@ This repository is an existing production-oriented codebase, not a clean-room re
 
 ## What exists now
 
-- Manual signal creation with TradingView image, BUY/SELL geometry checks, risk or fixed-lot sizing, setup/checklist snapshot, and multi-target trailing plan.
+- Manual signal creation with raw MT5 chart capture, BUY/SELL geometry checks, risk or fixed-lot sizing, setup/checklist snapshot, and multi-target trailing plan.
+- Raw MT5 chart-panel screenshots for initial signal and final result publication; no generated chart overlays are applied to those Telegram images.
 - Telegram signal publication and reply-chain lifecycle updates.
 - Direct MT5 market/pending execution with demo-account guard, configurable/discoverable symbol mapping, filling fallbacks, and risk controls.
 - Position-ID-based lifecycle monitoring for partial and final closes.
+- Result Chart V3 cards with a readable price-action panel plus a complete risk/reward map for entry, stop, every target, and persisted exits.
 - Ladder, R-based, fixed-R, ATR, and manual trailing profiles with persisted plans/actions.
 - Account and NEXUS-only performance analytics, workflow audit, reports, strategy analytics, archive, journal, and local deterministic trade review.
 - AutoTrade client/trailing policy data models. There is no central server or remote subscriber client yet.
@@ -18,7 +20,8 @@ Planned but not implemented: the central signal server, authenticated investor d
 
 ## Runtime layout
 
-- `Dashboard/app.py` — Streamlit Admin Command Center and signal orchestration.
+- `Dashboard/app.py` — streamlined, page-based Admin UI for account overview, signal issuance, setup checklists, and trade dossiers.
+- `Dashboard/advanced_app.py` — the original full Command Center, loaded only when Advanced tools is selected.
 - `MT5_MONITOR.py` / `monitor/mt5_monitor.py` — continuous MT5 lifecycle, trailing, reporting, and workflow monitor.
 - `mt5trade/executor.py` — direct MT5 order planning and submission.
 - `storage/repo.py` — SQLite schema and repository functions.
@@ -40,6 +43,18 @@ python -m streamlit run Dashboard/app.py
 ```
 
 For the normal two-process workflow, run `RUN_NEXUS.cmd`; it starts the monitor and then the dashboard. `MT5_MONITOR_ONCE.cmd` performs a single lifecycle synchronization. Do not run more than one continuous monitor.
+
+The default Admin UI evaluates only the selected page, so ordinary clicks no longer rebuild every analytics and operations panel. The Home page contains essential account cards and balance/equity charts. Signal setup selection immediately loads that setup's checklist; the scored checklist snapshot is stored with the signal for future reporting. Trade Archive starts as a compact trade menu and opens one detailed dossier at a time. The former all-in-one interface remains available through **Advanced tools**.
+
+## Raw MT5 chart publication
+
+For signal issuance and final-close cards, NEXUS captures the currently visible chart panel from the configured MT5 terminal. It does not add labels, redraw candles, or edit the screenshot. Before publishing a signal, open the intended symbol/timeframe chart in MT5 and keep its drawings visible. The crop is configured in `monitor.screenshot.chart_crop`; it excludes terminal panels while retaining the chart's own drawings and indicators. Partial exits remain text-card replies to the original signal; only the final close sends the raw chart image.
+
+## Direct MT5 account import
+
+This NEXUS MT5 account can be treated as a dedicated signal account. When the monitor sees a previously unknown live position, it records the next NX-ID and publishes it as an active NEXUS signal. A newly observed pending order is recorded and published as a pending NEXUS signal, then becomes active when MT5 fills it. These imports never submit, modify, or close the existing MT5 order.
+
+The Admin Home page lists imported signals that need a setup/checklist and entry rationale; save those details there to complete the journal dossier. Raw chart images are attached only when the currently active MT5 chart title matches the traded broker symbol. This prevents publishing another trade's chart when several positions are open. If the matching chart is not active or MT5 is minimized, NEXUS publishes the card without an image rather than sending a wrong screenshot.
 
 The configured MT5 account mode is guarded as demo by default. Do not change it to real without a deliberate live-trading release process.
 
