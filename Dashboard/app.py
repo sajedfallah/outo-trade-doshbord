@@ -34,7 +34,7 @@ from storage.repo import (
     list_account_snapshots, list_archive_files, list_results, list_setup_items,
     list_setups, list_signals, list_trade_events, list_trailing_actions,
     list_trailing_profiles, outbox_status, schema_version, update_setup,
-    update_setup_item,
+    update_setup_item, update_signal, save_signal_setup_score, upsert_trade_note,
 )
 from strategy.setup_engine import score_checklist
 from telegram.outbox import deliver_item
@@ -164,6 +164,33 @@ def render_home():
         if not events:
             st.caption("هنوز رویدادی ثبت نشده است.")
 
+    imported=[row for row in signals if str(row.get('strategy_version') or '')=='MT5_ACCOUNT_IMPORT']
+    if imported:
+        st.subheader("معاملات واردشده از MT5 — تکمیل ستاپ و ژورنال")
+        st.caption("این معاملات خودکار از حساب MT5 ثبت شده‌اند. نوع ستاپ، چک‌لیست و دلیل ورود را اینجا وارد کنید تا پروندهٔ معاملاتی کامل شود.")
+        choices={f"{row['signal_id']} · {row['symbol']} · {row.get('mt5_status')}":row for row in imported}
+        choice=st.selectbox("معامله نیازمند تکمیل",list(choices),key='imported_mt5_signal')
+        imported_signal=choices[choice];setups=list_setups(active_only=True)
+        if not setups:
+            st.warning("ابتدا یک ستاپ فعال بسازید.")
+        else:
+            setup_names=[row['name'] for row in setups]
+            selected_setup_name=st.selectbox("نوع ستاپ",setup_names,key='imported_setup')
+            selected_setup=next(row for row in setups if row['name']==selected_setup_name)
+            checklist=list_setup_items(selected_setup['id'],active_only=True);answers={}
+            with st.form(f"complete_import_{imported_signal['signal_id']}"):
+                for item in checklist:
+                    label=f"{item['item_text']} · {float(item.get('weight') or 0):g} امتیاز" + (" · اجباری ⭐" if item.get('required') else "")
+                    answers[str(item['id'])]=st.checkbox(label,key=f"import_{imported_signal['signal_id']}_{item['id']}")
+                rationale=st.text_area("دلیل ورود / توضیح ژورنال",key=f"import_reason_{imported_signal['signal_id']}")
+                if st.form_submit_button("ذخیره در پرونده معامله",type='primary'):
+                    score=score_checklist(selected_setup,checklist,answers,rationale,CFG.get('strategy_builder',{}).get('score_grades'))
+                    score['signal_id']=imported_signal['signal_id'];save_signal_setup_score(score)
+                    update_signal(imported_signal['signal_id'],setup_tag=selected_setup['name'],strategy_version='MT5_ACCOUNT_IMPORT_COMPLETED')
+                    upsert_trade_note(imported_signal['signal_id'],note=rationale)
+                    st.success("ستاپ و دلیل ورود به پروندهٔ معامله اضافه شد.")
+                    st.rerun()
+
 
 @st.fragment
 def render_signal():
@@ -252,7 +279,8 @@ def render_signal():
                  disabled=not (valid and signal_id.startswith("NX-") and checklist_allowed)):
         try:
             path = SIGNAL_DIR / f"{signal_id}.png"
-            screenshot = capture_current_chart(path, CFG)
+            expected_symbol=str(CFG.get('symbol_map',{}).get(symbol,symbol))
+            screenshot = capture_current_chart(path, CFG, expected_symbol=expected_symbol)
             if not screenshot.get("ok"):
                 st.error("تصویر خام چارت MT5 گرفته نشد؛ چارت MetaTrader را باز نگه دارید و دوباره تلاش کنید. خطا: " + str(screenshot.get("error") or "نامشخص"))
                 return

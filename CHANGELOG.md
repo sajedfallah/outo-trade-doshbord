@@ -2,6 +2,9 @@
 
 ## Unreleased — Admin dashboard simplification
 
+- Added account-wide MT5 import: unknown live positions become sequential active NEXUS signals and unknown pending orders become pending NEXUS signals, with ticket/position deduplication and no MT5 side effect.
+- Added an Admin Home workflow for completing the setup checklist and entry rationale of automatically imported MT5 trades.
+- Made raw chart capture symbol-aware. Manual issuance now waits for the restored MT5 window and fails closed if its active-chart title does not match the selected broker symbol; automatic import/final publication sends a text card rather than a wrong image in that case.
 - Replaced manual initial-chart uploads and generated result-image publication with raw chart-panel capture from the configured MT5 terminal. Initial signals fail closed if their raw chart cannot be captured; final cards fall back to text only if capture is unavailable.
 - Partial-close notifications now reply directly to the original signal without an image; final-close cards reply to the same signal with the raw MT5 chart screenshot.
 - Tuned the configured crop to exclude the MT5 terminal/trade panel while retaining the active chart and chart-drawn detail.

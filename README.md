@@ -50,6 +50,12 @@ The default Admin UI evaluates only the selected page, so ordinary clicks no lon
 
 For signal issuance and final-close cards, NEXUS captures the currently visible chart panel from the configured MT5 terminal. It does not add labels, redraw candles, or edit the screenshot. Before publishing a signal, open the intended symbol/timeframe chart in MT5 and keep its drawings visible. The crop is configured in `monitor.screenshot.chart_crop`; it excludes terminal panels while retaining the chart's own drawings and indicators. Partial exits remain text-card replies to the original signal; only the final close sends the raw chart image.
 
+## Direct MT5 account import
+
+This NEXUS MT5 account can be treated as a dedicated signal account. When the monitor sees a previously unknown live position, it records the next NX-ID and publishes it as an active NEXUS signal. A newly observed pending order is recorded and published as a pending NEXUS signal, then becomes active when MT5 fills it. These imports never submit, modify, or close the existing MT5 order.
+
+The Admin Home page lists imported signals that need a setup/checklist and entry rationale; save those details there to complete the journal dossier. Raw chart images are attached only when the currently active MT5 chart title matches the traded broker symbol. This prevents publishing another trade's chart when several positions are open. If the matching chart is not active or MT5 is minimized, NEXUS publishes the card without an image rather than sending a wrong screenshot.
+
 The configured MT5 account mode is guarded as demo by default. Do not change it to real without a deliberate live-trading release process.
 
 ## Critical lifecycle invariant

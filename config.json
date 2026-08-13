@@ -67,9 +67,10 @@
     "enabled": true,
     "poll_seconds": 2,
     "history_days": 14,
-    "partial_close_min_volume": 1E-06,
+    "partial_close_min_volume": 1e-06,
     "auto_publish_partial": true,
     "auto_publish_final": true,
+    "auto_import_account_entities": true,
     "screenshot": {
       "enabled": true,
       "mode": "chart_only",
@@ -112,7 +113,7 @@
   "dashboard": {
     "performance_source": "NEXUS trade events + current MT5 account snapshot",
     "refresh_seconds": 5,
-    "language": "fa",
+    "language": "en",
     "available_languages": [
       "fa",
       "en"

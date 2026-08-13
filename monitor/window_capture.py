@@ -169,11 +169,19 @@ def _client_bbox(hwnd):
     except Exception:
         return None
 
+
+def _title_matches_symbol(title,expected_symbol):
+    if not expected_symbol:
+        return True
+    title=str(title or '').lower().replace(' ','')
+    symbol=str(expected_symbol or '').lower().replace(' ','')
+    return bool(symbol and symbol in title)
+
 def capture_mt5(output_path,keywords=None,delay=.8,
                 fallback_full_desktop=False,mode="chart_only",
                 chart_crop=None,fallback_mt5_window=True,
                 process_names=None,terminal_exe_path=None,
-                window_class_keywords=None):
+                window_class_keywords=None,expected_symbol=None):
     output_path=Path(output_path)
     output_path.parent.mkdir(parents=True,exist_ok=True)
 
@@ -195,6 +203,9 @@ def capture_mt5(output_path,keywords=None,delay=.8,
         if chosen:
             _restore(chosen["hwnd"])
             time.sleep(float(delay))
+            if not _title_matches_symbol(chosen.get('title'),expected_symbol):
+                return {"ok":False,"error":"MT5_ACTIVE_CHART_SYMBOL_MISMATCH",
+                        "expected_symbol":str(expected_symbol),"active_window_title":chosen.get('title','')}
             bbox=_client_bbox(chosen["hwnd"])
             if bbox:
                 whole=ImageGrab.grab(bbox=bbox,all_screens=True)
@@ -250,7 +261,7 @@ def capture_mt5(output_path,keywords=None,delay=.8,
     except Exception as e:
         return {"ok":False,"error":str(e)}
 
-def capture_preview(output_path,screenshot_cfg):
+def capture_preview(output_path,screenshot_cfg,expected_symbol=None):
     return capture_mt5(
         output_path,
         keywords=screenshot_cfg.get("window_title_keywords"),
@@ -261,13 +272,14 @@ def capture_preview(output_path,screenshot_cfg):
         fallback_full_desktop=screenshot_cfg.get("fallback_full_desktop",False),
         mode=screenshot_cfg.get("mode","chart_only"),
         chart_crop=screenshot_cfg.get("chart_crop",{}),
-        fallback_mt5_window=screenshot_cfg.get("fallback_mt5_window",True)
+        fallback_mt5_window=screenshot_cfg.get("fallback_mt5_window",True),
+        expected_symbol=expected_symbol
     )
 
 
-def capture_current_chart(output_path,cfg):
+def capture_current_chart(output_path,cfg,expected_symbol=None):
     """Capture the visible MT5 chart panel without any drawing or redesign."""
     screenshot_cfg=(cfg or {}).get("monitor",{}).get("screenshot",{}) or {}
     if not screenshot_cfg.get("enabled",False):
         return {"ok":False,"error":"MT5_RAW_CHART_CAPTURE_DISABLED"}
-    return capture_preview(output_path,screenshot_cfg)
+    return capture_preview(output_path,screenshot_cfg,expected_symbol=expected_symbol)

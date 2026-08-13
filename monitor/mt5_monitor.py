@@ -8,10 +8,11 @@ ROOT=Path(__file__).resolve().parent.parent
 from storage.repo import (
     monitored_signals,get_signal,update_signal,event_exists,insert_event,
     update_event_message,list_trade_events,save_account_snapshot_if_due,set_state,get_trade_metrics,
-    get_signal_trailing_plan,update_signal_trailing_plan,enqueue_outbox
+    get_signal_trailing_plan,update_signal_trailing_plan,enqueue_outbox,list_signals,
+    next_signal_id,create_signal_durable
 )
 from telegram.outbox import deliver_item,deliver_due,startup_recovery
-from Dashboard.cards import partial_close_card,final_mt5_card
+from Dashboard.cards import partial_close_card,final_mt5_card,imported_mt5_signal_card
 from monitor.window_capture import capture_current_chart
 from monitor.performance_reports import check_scheduled_reports
 from monitor.trade_metrics import compute_trade_metrics
@@ -75,6 +76,64 @@ def find_pending(mt5,signal):
         if key in str(getattr(o,"comment","")).upper():
             return o
     return None
+
+
+def _is_buy(mt5,order_type):
+    return int(order_type) in {int(getattr(mt5,'POSITION_TYPE_BUY',0)),int(getattr(mt5,'ORDER_TYPE_BUY',0)),
+                               int(getattr(mt5,'ORDER_TYPE_BUY_LIMIT',2)),int(getattr(mt5,'ORDER_TYPE_BUY_STOP',4))}
+
+
+def _has_registered_entity(signals,*,ticket=None,position_id=None):
+    ticket=str(ticket or '');position_id=str(position_id or '')
+    return any((ticket and str(row.get('mt5_ticket') or '')==ticket) or
+               (position_id and str(row.get('mt5_position_id') or '')==position_id)
+               for row in signals)
+
+
+def import_account_entities(mt5,cfg):
+    """Adopt every new position/order in this dedicated MT5 account into NEXUS.
+
+    The imported row is a published record, not an MT5 execution request, so it
+    can never re-open or change the external position.
+    """
+    if not cfg.get('monitor',{}).get('auto_import_account_entities',True):
+        return []
+    signals=list_signals();created=[]
+    entities=[('OPEN',row) for row in list(mt5.positions_get() or [])]
+    entities += [('PENDING',row) for row in list(mt5.orders_get() or [])]
+    for status,row in entities:
+        ticket=str(getattr(row,'ticket','') or '')
+        position_id=str(getattr(row,'identifier','') or ticket) if status=='OPEN' else ''
+        if _has_registered_entity(signals,ticket=ticket,position_id=position_id):
+            continue
+        entry=float(getattr(row,'price_open',0) or 0);symbol=str(getattr(row,'symbol','') or '')
+        if not ticket or not symbol or entry<=0:
+            log(f'ACCOUNT IMPORT skipped invalid {status} entity ticket={ticket} symbol={symbol}')
+            continue
+        side='BUY' if _is_buy(mt5,getattr(row,'type',-1)) else 'SELL'
+        signal_id=next_signal_id();sl=float(getattr(row,'sl',0) or 0);tp=float(getattr(row,'tp',0) or 0)
+        volume=float(getattr(row,'volume',getattr(row,'volume_current',getattr(row,'volume_initial',0))) or 0)
+        screenshot_path=ROOT/'uploads'/'signals'/f'{signal_id}.png'
+        capture=capture_current_chart(screenshot_path,cfg,expected_symbol=symbol)
+        if not capture.get('ok'):
+            screenshot_path=None
+            log(f'{signal_id} ACCOUNT IMPORT chart unavailable: {capture.get("error")}')
+        payload={
+            'signal_id':signal_id,'symbol':symbol,'direction':side,'timeframe':'MT5',
+            'entry':entry,'tp':tp,'sl':sl,'risk_percent':None,'lot':volume,'rr':None,
+            'setup_image_path':str(screenshot_path) if screenshot_path else None,'mt5_enabled':True,
+            'mt5_status':status,'mt5_ticket':ticket,'mt5_position_id':position_id or None,
+            'mt5_symbol':symbol,'mt5_volume':volume,'initial_volume':volume if status=='OPEN' else None,
+            'last_volume':volume if status=='OPEN' else None,'monitor_state':status,
+            'setup_tag':'UNCLASSIFIED','strategy_version':'MT5_ACCOUNT_IMPORT'
+        }
+        card=imported_mt5_signal_card(payload,status)
+        result=create_signal_durable(payload,None,None,{'image_path':str(screenshot_path) if screenshot_path else None,'text':card})
+        audit(signal_id,'SIGNAL_CREATED','DONE',f'{signal_id}:ACCOUNT_IMPORT:{status}:{ticket}',source='MT5_ACCOUNT_IMPORT',detail=f'{symbol} {side} ticket={ticket}')
+        delivery=deliver_item(result['outbox'])
+        log(f'{signal_id} ACCOUNT IMPORT {status} ticket={ticket} telegram={delivery.get("sent")}')
+        signals.append(result['signal']);created.append(result['signal'])
+    return created
 
 def deals_for_position(mt5,position_id):
     """
@@ -164,7 +223,7 @@ def publish_event(mt5,cfg,signal,event,card):
     # untouched screenshot of the visible MT5 chart panel.
     if event.get('event_type')=='FINAL_CLOSE':
         try:
-            chart_result=capture_current_chart(path,cfg)
+            chart_result=capture_current_chart(path,cfg,expected_symbol=signal.get('mt5_symbol') or signal.get('symbol'))
         except Exception as e:
             chart_result={"ok":False,"error":str(e)}
         event["screenshot_path"]=str(path) if chart_result.get("ok") else None
@@ -415,6 +474,12 @@ def run_once():
         except Exception as e:
             set_state("monitor_heartbeat",{"ok":False,"time":datetime.now().astimezone().isoformat(timespec="seconds"),"error":str(e)})
         signals=monitored_signals()
+        try:
+            imported=import_account_entities(mt5,cfg)
+            if imported:log(f'Imported {len(imported)} account MT5 entities into NEXUS.')
+            signals=monitored_signals()
+        except Exception as e:
+            log(f'ACCOUNT IMPORT ERROR {e}')
         if not signals:
             log("No monitored Nexus signals.")
         for signal in signals:

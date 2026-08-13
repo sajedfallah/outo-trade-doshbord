@@ -12,7 +12,7 @@ USED = {
     "risk_management.max_lot", "risk_management.max_total_open_risk_percent",
     "execution.execute_by_default", "execution.telegram_only_default", "symbol_map", "symbols", "timeframes",
     "monitor.enabled", "monitor.poll_seconds", "monitor.partial_close_min_volume",
-    "monitor.auto_publish_partial", "monitor.auto_publish_final", "monitor.screenshot",
+    "monitor.auto_publish_partial", "monitor.auto_publish_final", "monitor.auto_import_account_entities", "monitor.screenshot",
     "dashboard", "reporting", "analytics", "journal", "prop_firm",
     "risk_intelligence", "workflow", "strategy_builder", "trailing",
 }

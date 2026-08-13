@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from config_audit import audit_config
 from config_loader import load_config
@@ -57,7 +58,7 @@ def test_partial_notice_replies_to_original_signal_without_chart(monkeypatch,tmp
 
 def test_final_notice_captures_raw_mt5_chart(monkeypatch,tmp_path):
     payload={}
-    def capture(output,cfg):
+    def capture(output,cfg,expected_symbol=None):
         assert 'FINAL_CLOSE' in output.name
         Path(output).write_bytes(b'raw')
         return {'ok':True,'mode':'chart_only_metaquotes'}
@@ -68,6 +69,31 @@ def test_final_notice_captures_raw_mt5_chart(monkeypatch,tmp_path):
     event={'event_key':'NX-001:FINAL:1','event_type':'FINAL_CLOSE'}
     mt5_monitor.publish_event(None,{'monitor':{'screenshot':{'enabled':True}}},signal,event,'final')
     assert payload['image_path'] and payload['reply_to_message_id']==99
+
+
+def test_account_position_is_imported_once_as_a_nexus_signal(repo_db,base_config,monkeypatch):
+    fake=FakeMT5Gateway()
+    fake.positions=[SimpleNamespace(ticket=301,identifier=901,symbol='XAUUSD',type=fake.POSITION_TYPE_BUY,
+                                    price_open=3000.0,sl=2990.0,tp=3020.0,volume=.10)]
+    monkeypatch.setattr(mt5_monitor,'capture_current_chart',lambda *args,**kwargs:{'ok':False,'error':'NO_MATCH'})
+    monkeypatch.setattr(mt5_monitor,'deliver_item',lambda item:{'sent':True,'message_id':55})
+    imported=mt5_monitor.import_account_entities(fake,{**base_config,'monitor':{'auto_import_account_entities':True}})
+    assert len(imported)==1
+    saved=repo.list_signals()[0]
+    assert saved['signal_id']=='NX-001' and saved['mt5_ticket']=='301' and saved['mt5_position_id']=='901'
+    assert saved['mt5_status']=='OPEN' and saved['strategy_version']=='MT5_ACCOUNT_IMPORT'
+    assert mt5_monitor.import_account_entities(fake,{**base_config,'monitor':{'auto_import_account_entities':True}})==[]
+
+
+def test_account_pending_is_imported_as_pending_signal(repo_db,base_config,monkeypatch):
+    fake=FakeMT5Gateway()
+    fake.orders=[SimpleNamespace(ticket=302,symbol='EURUSD',type=fake.ORDER_TYPE_SELL_LIMIT,
+                                 price_open=1.2,sl=1.21,tp=1.18,volume_current=.25)]
+    monkeypatch.setattr(mt5_monitor,'capture_current_chart',lambda *args,**kwargs:{'ok':False,'error':'NO_MATCH'})
+    monkeypatch.setattr(mt5_monitor,'deliver_item',lambda item:{'sent':True,'message_id':56})
+    mt5_monitor.import_account_entities(fake,{**base_config,'monitor':{'auto_import_account_entities':True}})
+    saved=repo.list_signals()[0]
+    assert saved['direction']=='SELL' and saved['mt5_status']=='PENDING' and saved['monitor_state']=='PENDING'
 
 
 def test_executor_surfaces_order_rejection(repo_db,base_config):
