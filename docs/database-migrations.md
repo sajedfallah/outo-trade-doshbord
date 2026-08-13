@@ -2,7 +2,7 @@
 
 Schema version 2 introduces `schema_migrations`, the durable `outbox`, signal publication state, and reliability indexes. Migrations use `CREATE IF NOT EXISTS`, guarded additive columns, and unique keys, so they can run repeatedly.
 
-On the first repository access to an existing pre-v0.9.20 database, NEXUS acquires a cross-process schema lock and creates a timestamped SQLite online backup before applying version 2. This also protects in-place upgrades, not only ZIP-to-ZIP migration.
+On the first repository access to an existing pre-v0.9.20 database, NEXUS verifies that an older monitor process is not active, acquires a cross-process schema lock, and creates a timestamped SQLite online backup before applying version 2. This also protects in-place upgrades, not only ZIP-to-ZIP migration.
 
 ## Upgrade procedure
 

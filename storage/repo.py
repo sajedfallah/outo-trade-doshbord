@@ -389,6 +389,14 @@ def migrate():
     with FileLock(str(DB)+'.schema.lock',timeout=30):
         prior=_detected_schema_version()
         if 0<prior<SCHEMA_VERSION:
+            pid_file=DB.parent/'mt5_monitor.pid'
+            if pid_file.exists():
+                try:
+                    import psutil
+                    monitor_pid=int(pid_file.read_text(encoding='utf-8').strip())
+                    if monitor_pid!=os.getpid() and psutil.pid_exists(monitor_pid):
+                        raise RuntimeError(f'Schema migration requires the existing NEXUS monitor to stop first (PID {monitor_pid}).')
+                except ValueError:pass
             timestamped_backup(DB,DB.parent/'backups',f'NEXUS_DATA_before_schema_v{SCHEMA_VERSION}')
         _migrate_unlocked()
 
