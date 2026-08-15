@@ -1,0 +1,29 @@
+NEXUS v0.9.39.1 FINAL VALIDATION
+
+Scope: Typography/readability and internal-title alignment across Admin + Client.
+
+PASS  python -m compileall -q .
+PASS  pytest -q -> 135 passed
+PASS  python tests/_runtime_smoke_matrix.py -> RUNTIME_SMOKE_MATRIX_OK
+PASS  python tests/_runtime_smoke_client.py -> CLIENT_RUNTIME_SMOKE_MATRIX_OK
+
+Manual Windows workstation evidence after release packaging:
+PASS  Admin available on localhost:8501
+PASS  Client available on localhost:8502
+PASS  Client API starts on port 8790
+PASS  Customer / subscription / license creation path observed
+PASS  Client authentication observed once API service is running
+PASS  Client subscription/license metadata view observed
+PENDING  Client MT5 Demo connection / activation
+PENDING  License binding persistence / negative binding test
+PENDING  Assigned signal -> AutoTrade -> MT5 demo end-to-end execution
+PENDING  Partial / BE / trailing / restart recovery demo validation
+PENDING  Reverse sync / manual close acceptance
+PENDING  Performance/report reconciliation against broker history
+PENDING  Final responsive/theme/language user acceptance matrix
+
+Implementation note:
+The v0.9.39.1 readability fix is centralized in Dashboard/components/ui_tokens.py so Admin and Client consume the same typography system. Desktop, tablet and mobile media rules include explicit readability overrides, preventing legacy compact CSS from reintroducing tiny text.
+
+IMPORTANT:
+Automated PASS results do not approve live/funded-account use. The pending Windows + MT5 Demo acceptance workflow is documented in docs/NEXT_VALIDATION_WORKFLOW_FA.md.
