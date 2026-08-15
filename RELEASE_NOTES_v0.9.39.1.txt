@@ -1,0 +1,31 @@
+NEXUS v0.9.39.1 — Readability & Typography Final
+
+READABILITY SYSTEM
+- Added one shared readability layer (NEXUS-TYPE-1.0) in Dashboard/components/ui_tokens.py.
+- The same typography rules apply to Admin + Client, Dark + Light, desktop + tablet + mobile.
+- Raised the desktop root scale to 17px with responsive 16.5px / 16px scales on smaller screens.
+- Replaced tiny legacy visual-density overrides with readable minimum sizes for metadata, forms, cards, tables, status chips and navigation.
+- Improved Persian/English font fallback to Vazirmatn / IRANYekanX / Segoe UI / Tahoma without bundling external fonts.
+
+TITLE ALIGNMENT
+- Internal section titles are centered consistently.
+- Client and management page hero titles are centered.
+- Panel, service, terminal, login and client-card titles are centered.
+- Tab titles are centered.
+
+COMPONENTS UPDATED THROUGH SHARED TOKENS
+- Admin sidebar/header, dashboard command cards, health cards, account panels, Market Pulse, management cards and tables.
+- Customer / Subscription / License center and quick-create wizard.
+- Client dashboard, login, KPI cards, signals, trades, performance, AutoTrade, subscription/license and profile views.
+- Mobile responsive rules explicitly prevent old compact styles from shrinking typography again.
+
+VALIDATION
+- python -m compileall: PASS
+- pytest: 135 passed
+- Admin runtime smoke matrix: PASS (FA/EN, Dark/Light)
+- Client runtime smoke matrix: PASS (FA/EN, Dark/Light)
+
+NEXT RELEASE GATE
+- Controlled Windows + MT5 Demo end-to-end validation.
+- Do not approve funded-account usage from automated/UI tests alone.
+- See docs/NEXT_VALIDATION_WORKFLOW_FA.md.
