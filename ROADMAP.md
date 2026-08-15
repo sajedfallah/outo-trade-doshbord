@@ -1,99 +1,296 @@
 # NEXUS incremental roadmap
 
-The current baseline is v0.9.19. Work proceeds in small, migration-safe milestones; local Admin operation remains available throughout server evolution.
+## Current baseline
 
-## Milestone 0 — v0.9.20 stabilization and safety (implemented; live validation pending)
+**NEXUS v0.9.39.1 — Responsive Premium Platform / Readability Final**
 
-This is the next implementation milestone.
+The project has reached the point where platform surfaces, local client services, roles, subscriptions, licensing and the responsive Admin/Client experience exist. The next priority is **stabilization and end-to-end validation**, not broad feature expansion.
 
-### 0A. Repository and secret hygiene
+The release principle from this point forward is:
 
-- Rotate the exposed Telegram token.
-- Load the token from an environment variable or ignored local secret file while keeping channel ID/config separate.
-- Add `.env.example` and `.gitignore`; remove secrets, production DB/WAL/SHM, logs, locks, PIDs, and personal uploads from distributable source.
-- Add a redacted configuration validator and prevent secret values from entering diagnostics.
+```text
+STABILITY
+  ↓
+CLIENT FLOW
+  ↓
+MT5 DEMO VALIDATION
+  ↓
+END-TO-END EXECUTION
+  ↓
+REVERSE SYNC / REPORTING
+  ↓
+SECURITY / PACKAGING
+  ↓
+CLOUD / COMMERCIAL RELEASE
+```
 
-Acceptance: a clean checkout starts after documented local configuration, no real secret is present in repository files, and Telegram tests redact credential-bearing URLs/responses.
+---
 
-### 0B. Test foundation
+## Milestone A — v0.9.39.1 baseline freeze
 
-- Add `tests/` with pure unit tests for event R/classification, risk throttle, target validation, volume stepping, checklist scoring, mixed timestamps, workflow state, and client policy precedence.
-- Add fake-MT5 integration tests for market/pending planning, position-ID history, partial/final lifecycle, trailing stages, broker rejects, and restart recovery.
-- Add temporary-SQLite migration tests from representative prior schemas and verify idempotency/data preservation.
-- Add mocked Telegram tests for reply chaining, retry, timeout, and crash recovery.
+**Status: current**
 
-Acceptance: tests run without a broker or real Telegram token and cover every P0/P1 defect fixed below.
+Completed baseline capabilities:
 
-### 0C. Durable external-effects workflow
+- Responsive Admin Command Center.
+- Responsive Client Trading Portal.
+- Shared DARK/LIGHT visual system.
+- Persian/English UI surfaces.
+- `NEXUS-TYPE-1.0` readability layer and centered internal titles.
+- Platform users, roles and permissions.
+- Customer/Client ID management.
+- Products, subscriptions and entitlements.
+- License generation, ownership and MT5/device binding model.
+- Authenticated Client API.
+- License Server.
+- Unified Customer + Subscription + License Quick Create flow.
+- Existing MT5 execution, monitor, risk, trailing, Telegram, reports and analytics infrastructure.
 
-- Persist signal intent and immutable setup/trailing snapshots before Telegram/MT5 side effects.
-- Replace `INSERT OR REPLACE` signal behavior with explicit create/update semantics and reject duplicate NX-IDs.
-- Add outbox/delivery states for signal, partial, final, and report publication; retry failed deliveries without duplicating successful sends.
-- Reconcile MT5 action intent against live position/deal history after crashes before retrying a partial close or SL move.
+Automated release evidence:
 
-Acceptance: injected crashes at each boundary recover without lost lifecycle messages, duplicate Telegram posts, duplicate partial closes, or overwritten signal dossiers.
+- `python -m compileall -q .` — PASS.
+- `pytest -q` — 135 passed.
+- Admin runtime smoke matrix — PASS.
+- Client runtime smoke matrix — PASS.
 
-### 0D. MT5 monitor stabilization
+Acceptance to close this milestone:
 
-- Make MT5 session ownership explicit; chart generation must reuse the active session or avoid shutting it down.
-- Stop polling/log flooding for `NOT_REQUESTED`, invalid, canceled, or permanently unresolvable records; surface one durable workflow diagnostic with controlled retry/backoff.
-- Resolve pending fill/cancel/expiry transitions through order history and persist a terminal state.
-- Make trailing restart-aware by reconstructing target crossings since the last durable stage, not only from the current M1 candle.
-- Validate freeze level and stop distance explicitly and preserve raw request/retcode diagnostics.
-- Enforce `monitor.enabled`, `trailing.enabled`, and other operational flags consistently.
+- Repository/documentation reflects the v0.9.39.1 baseline.
+- No known critical UI/runtime regression blocks the next demo validation.
+- A backup branch exists before repository synchronization.
 
-Acceptance: a mocked restart across TP1/TP2/TP3 produces exactly one partial and the expected SL stages; canceled pending orders terminate cleanly; scheduled reports still work after result-chart publication.
+---
 
-### 0E. Versioned, WAL-safe migrations
+## Milestone B — Client + MT5 demo activation
 
-- Introduce ordered schema versions and a migration ledger.
-- Make repository connection ownership explicit and close connections deterministically; do not rely on `sqlite3.Connection` context management to close file handles.
-- Use SQLite online backup/checkpoint-aware copying; never copy only an active main DB file.
-- Validate integrity, schema version, row counts, and upload paths before switching installations.
-- Keep and document rollback backups; make the Windows migration launcher non-interactive-capable while retaining guided mode.
-- Add foreign keys/indexes where safe through tested rebuild migrations.
+**Priority: NEXT**
 
-Acceptance: migration tests preserve all audited entities from prior fixtures, work twice idempotently, and fail closed without replacing the destination when validation fails.
+Goal: prove that an authenticated client can connect a real demo MT5 terminal and activate the assigned license without weakening the existing security boundary.
 
-## Milestone 1 — Result Chart V3
+Required sequence:
 
-- Premium dark NEXUS composition with collision-aware ENTRY/EXIT/TP/SL labels.
-- Plot all partial exits and the final exit from persisted lifecycle events.
-- Use configured display timezone and broker digits; keep public realized R hidden.
-- Add golden-image/layout tests across BUY/SELL, 1–8 targets, dense candles, and long symbols.
+1. Start Client API on `127.0.0.1:8790`.
+2. Start Admin on `localhost:8501`.
+3. Start Client on `localhost:8502`.
+4. Create a dedicated demo client through Quick Create.
+5. Confirm role, subscription and active license.
+6. Connect the Client Portal to a demo `terminal64.exe`.
+7. Verify MT5 login/server detection.
+8. Activate license.
+9. Verify first binding to the expected Client ID + MT5 Login + device fingerprint.
+10. Restart Client/API and verify binding persists.
+11. Verify another MT5 login/device is rejected until Admin Reset Binding is used.
 
-## Milestone 2 — trailing broker validation
+Acceptance:
 
-- Demo-account validation matrix for TP1 partial + BE, TP2 -> TP1, TP3 -> TP2.
-- Validate min/max/step, stop/freeze levels, spread, filling modes, partial-deal timing, and restart recovery on Roco demo.
-- Document static/local results separately from MT5 live evidence.
+- Client status changes from `MT5 OFFLINE` to connected.
+- License remains ACTIVE and bound to the correct demo account/device.
+- No Admin-only information is exposed to the client.
+- Restart/reconnect does not create a duplicate binding.
 
-## Milestone 3 — Strategy Builder and archive polish
+---
 
-- Enforce configurable grade thresholds and required-checklist publication rules.
-- Make setup/trailing snapshots database-immutable.
-- Complete trade dossier fields, media categories, path portability, and gallery UX.
-- Add sample-size labels and uncertainty warnings to descriptive checklist analytics; never imply causation.
+## Milestone C — First assigned signal end-to-end
 
-## Milestone 4 — central signal server foundation
+Goal: validate the complete signal path without relying on assumptions from isolated tests.
 
-- Write API, authentication, authorization, signal revision, policy, heartbeat, acknowledgement, and audit specifications first.
-- Add a minimal FastAPI/PostgreSQL service beside the local Admin; use a durable local outbox/sync adapter.
-- Preserve offline local Admin operation during migration.
-- Telegram remains a publication channel, not client transport.
+```text
+Admin Signal
+  ↓
+Signal Distribution
+  ↓
+Client Assignment
+  ↓
+Client API
+  ↓
+Client Portal
+  ↓
+Permission / Entitlement / License checks
+  ↓
+AutoTrade
+  ↓
+MT5 Demo
+```
 
-## Milestone 5 — authenticated investor dashboard
+Test cases:
 
-- Separate read-only application and server-side role authorization.
-- Admin-controlled publication of open trades and archives.
-- No execution controls, credentials, internal notes, or operational diagnostics.
+- One BUY signal.
+- One SELL signal.
+- Signal assigned to Client A is invisible to Client B.
+- Expired/suspended subscription cannot execute.
+- Invalid/unbound license cannot execute.
+- MT5 offline prevents execution cleanly.
+- Risk/kill-switch block prevents new execution while the signal remains visible where appropriate.
 
-## Milestone 6 — Windows AutoTrade client
+Acceptance:
 
-- Authenticated central-server transport, local-only MT5 credentials, heartbeat/reconnect, signal deduplication, acknowledgements, and restart-safe local trailing.
-- Apply authority in this order: signal override > Admin client policy > permitted user preference > default profile.
+- Exactly one MT5 order is produced for one accepted signal.
+- No duplicate execution after refresh/restart.
+- Rejected executions return a clear reason.
+- Execution report is persisted client-scoped.
 
-## Milestone 7 — subscription and expiry
+---
 
-- Plans, start/expiry, suspension, features, risk/trailing ranges, symbols, client limits, and optional account/broker/device bindings.
-- Define and test safe management of already-open positions after expiry before enforcing it.
+## Milestone D — Position lifecycle and trade management
+
+Goal: validate the demo position after entry.
+
+Required evidence:
+
+- Entry captured correctly.
+- SL/TP geometry matches the signal.
+- Partial close behavior is correct.
+- Break-even stage is correct.
+- Trailing stages are correct.
+- Restart during an open trade reconstructs state safely.
+- Manual broker-side close is associated through `position_id`.
+- Final close is stored exactly once.
+
+Acceptance:
+
+- No duplicate partial closes.
+- No duplicate SL moves.
+- No orphaned lifecycle after restart.
+- Position-ID history remains the authoritative lifecycle source.
+
+---
+
+## Milestone E — Reverse sync and multi-surface consistency
+
+Goal: Admin, Client and MT5 must agree on the same trade state.
+
+Validate:
+
+- MT5 open position -> Admin active trade.
+- MT5 open position -> Client trade view.
+- Pending -> filled transition.
+- Manual close -> final closed state.
+- Client execution report -> Admin/client reporting.
+- Unknown externally opened demo position import behavior.
+
+Acceptance:
+
+- No cross-client leakage.
+- No stale active position after final close.
+- No duplicate import after restart.
+
+---
+
+## Milestone F — Performance and reporting acceptance
+
+Validate after completed demo trades:
+
+- Balance / Equity.
+- Daily P/L.
+- Win/Loss/BE classification.
+- R multiple.
+- Duration.
+- MAE/MFE where available.
+- Daily report.
+- Weekly report.
+- Client personal report scope.
+- Admin account-wide/NEXUS analytics.
+
+Acceptance:
+
+- Closed-trade metrics match the broker history used by NEXUS.
+- Client sees only its own entitled reporting surface.
+- Daily/weekly summaries do not double count canceled/active trades.
+
+---
+
+## Milestone G — Responsive / theme / language UAT
+
+Before the next stable beta, test every important page in:
+
+```text
+FA + DARK
+FA + LIGHT
+EN + DARK
+EN + LIGHT
+```
+
+Viewport matrix:
+
+- 1920×1080 desktop.
+- 1366×768 laptop.
+- 1024px tablet landscape.
+- 768px tablet.
+- ~390×844 mobile.
+
+Acceptance:
+
+- No horizontal overflow in primary workflows.
+- No unreadably small typography.
+- Internal titles remain centered.
+- Forms remain touch-friendly.
+- Customer/license and client pages remain usable on mobile.
+
+---
+
+## Milestone H — Stable Beta v0.9.40
+
+The next version should be named **v0.9.40 STABLE BETA** only after Milestones B–G have documented evidence.
+
+v0.9.40 should prioritize bug fixes, reliability and acceptance results over new feature breadth.
+
+Release requirements:
+
+- Demo E2E signal/trade pass.
+- Restart/recovery pass.
+- Reverse-sync pass.
+- Client isolation pass.
+- Role/entitlement/license negative tests pass.
+- Responsive/theme/language UAT pass.
+- Clean public-source secret scan.
+- Updated operator documentation.
+
+---
+
+## Milestone I — Production hardening
+
+After stable beta:
+
+- HTTPS/TLS for hosted services.
+- Hardened authentication/session policy.
+- Rate limiting.
+- Audit logs for sensitive Admin operations.
+- Central observability and error monitoring.
+- Backup/restore drills.
+- License abuse/replay controls.
+- Remote heartbeat/reconnect behavior.
+- Windows client/agent packaging and update mechanism.
+
+---
+
+## Milestone J — Cloud SaaS architecture
+
+Target architecture:
+
+```text
+                    NEXUS CLOUD
+                         │
+      ┌──────────────────┼──────────────────┐
+      │                  │                  │
+   Database          API Server       License Service
+      │                  │                  │
+      └──────────────────┼──────────────────┘
+                         │
+                Signal Distribution
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+       Client A       Client B       Client C
+          │              │              │
+       MT5 Agent      MT5 Agent      MT5 Agent
+```
+
+Commercial infrastructure such as OTP, payment gateway, billing, invoices, automatic renewal, SMS/email verification and support automation belongs after the trading/client core is stable.
+
+---
+
+## Current rule
+
+**Do not approve funded/live-account use based only on compile, pytest or UI smoke results.**
+
+The immediate release gate is the controlled Windows + MT5 demo workflow documented in `docs/NEXT_VALIDATION_WORKFLOW_FA.md`.
